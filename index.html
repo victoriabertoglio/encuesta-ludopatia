@@ -1,32 +1,48 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Estadísticas de Apuestas</title>
+
+  <!-- Favicon vacío para evitar 404 -->
+  <link rel="icon" href="data:," />
+
+  <!-- Tailwind (si te molestan los warnings de producción, ignóralos; el CSS funciona) -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    /* Forzar que el contenedor no cause scroll vertical innecesario en pantallas grandes */
+    html,body { height:100%; }
+  </style>
 </head>
-<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen">
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
   <div class="bg-white shadow-lg rounded-2xl p-8 w-11/12 md:w-3/4 lg:w-2/3">
     <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">
       Análisis de Encuesta de Apuestas
     </h1>
 
-    <div class="flex justify-center mb-8">
-      <button id="calcBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 text-lg rounded-lg shadow">
+    <div class="flex justify-center mb-6">
+      <button id="calcBtn"
+              class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 text-lg rounded-lg shadow"
+              type="button">
         Realizar cálculo
       </button>
     </div>
 
+    <!-- Mensaje de estado / errores visibles en página -->
+    <div id="status" class="text-center text-sm text-red-600 mb-4 hidden"></div>
+
     <div id="results" class="hidden">
       <div class="flex flex-col md:flex-row justify-center items-center gap-8">
-        
         <div class="text-center">
           <h2 class="text-xl font-semibold text-gray-700 mb-3">
             Apuestas en casino online
           </h2>
-          <canvas id="casinoChart" width="300" height="300"></canvas>
+          <canvas id="casinoChart" width="300" height="300" aria-label="Gráfico casino online"></canvas>
           <p id="casinoPct" class="text-2xl font-bold text-blue-600 mt-3"></p>
         </div>
 
@@ -34,13 +50,101 @@
           <h2 class="text-xl font-semibold text-gray-700 mb-3">
             Personas menores de 13 años
           </h2>
-          <canvas id="ageChart" width="300" height="300"></canvas>
+          <canvas id="ageChart" width="300" height="300" aria-label="Gráfico menores de 13"></canvas>
           <p id="agePct" class="text-2xl font-bold text-orange-500 mt-3"></p>
         </div>
-
       </div>
     </div>
   </div>
 
   <script>
-    document.getEleme
+    // Valores ya calculados (subconjunto: quienes SÍ apostaron)
+    const casinoOnlinePct = 61.54;
+    const menores13Pct = 38.46;
+
+    // Función auxiliar para mostrar errores amigables en la página
+    function showStatus(msg) {
+      const s = document.getElementById('status');
+      s.innerText = msg;
+      s.classList.remove('hidden');
+    }
+
+    // Ejecutar solo cuando el DOM esté listo
+    window.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('calcBtn');
+      const results = document.getElementById('results');
+
+      // Protección: verificar que Chart está cargado
+      if (typeof Chart === 'undefined') {
+        showStatus('Error: Chart.js no cargó. Revisa conexión CDN o abre la consola para más detalles.');
+        console.error('Chart.js no disponible. Comprueba que https://cdn.jsdelivr.net/npm/chart.js cargue correctamente.');
+        btn.disabled = true;
+        return;
+      }
+
+      // Handler principal
+      btn.addEventListener('click', () => {
+        try {
+          // Mostrar resultados (oculta el status de error si existía)
+          const s = document.getElementById('status');
+          s.classList.add('hidden');
+          results.classList.remove('hidden');
+
+          // Escribir porcentajes como texto
+          document.getElementById('casinoPct').innerText = casinoOnlinePct + '%';
+          document.getElementById('agePct').innerText = menores13Pct + '%';
+
+          // Destruir charts previos si existen (evita errores si el botón se aprieta varias veces)
+          if (window._casinoChart instanceof Chart) {
+            window._casinoChart.destroy();
+          }
+          if (window._ageChart instanceof Chart) {
+            window._ageChart.destroy();
+          }
+
+          // Crear gráfico de pastel - Casino online
+          window._casinoChart = new Chart(document.getElementById('casinoChart'), {
+            type: 'pie',
+            data: {
+              labels: ['Apuesta en casino online', 'No apuesta en casino online'],
+              datasets: [{
+                data: [casinoOnlinePct, 100 - casinoOnlinePct],
+                backgroundColor: ['#3b82f6', '#93c5fd'],
+                hoverOffset: 8
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              plugins: { legend: { position: 'bottom' } }
+            }
+          });
+
+          // Crear gráfico de pastel - Menores de 13
+          window._ageChart = new Chart(document.getElementById('ageChart'), {
+            type: 'pie',
+            data: {
+              labels: ['Menores de 13', 'Mayores o iguales a 13'],
+              datasets: [{
+                data: [menores13Pct, 100 - menores13Pct],
+                backgroundColor: ['#f97316', '#fed7aa'],
+                hoverOffset: 8
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              plugins: { legend: { position: 'bottom' } }
+            }
+          });
+
+        } catch (err) {
+          // Mostrar info de error al usuario y a la consola para depuración
+          showStatus('Ocurrió un error al dibujar los gráficos. Abre la consola para más detalles.');
+          console.error('Error al dibujar gráficos:', err);
+        }
+      });
+    });
+  </script>
+</body>
+</html>
