@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Estadísticas de Apuestas</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen">
+  <div class="bg-white shadow-lg rounded-2xl p-6 w-11/12 md:w-2/3 lg:w-1/2">
+    <h1 class="text-2xl font-bold text-center text-gray-800 mb-4">
+      Análisis de Encuesta de Apuestas
+    </h1>
+
+    <div class="flex justify-center mb-6">
+      <button id="calcBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow">
+        Realizar cálculo
+      </button>
+    </div>
+
+    <div id="results" class="hidden">
+      <div class="mb-6">
+        <h2 class="text-lg font-semibold text-center text-gray-700 mb-2">
+          Porcentaje de personas que apuestan en casino online
+        </h2>
+        <canvas id="casinoChart" width="300" height="300"></canvas>
+      </div>
+
+      <div>
+        <h2 class="text-lg font-semibold text-center text-gray-700 mb-2">
+          Porcentaje de personas menores de 13 años
+        </h2>
+        <canvas id="ageChart" width="300" height="300"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("calcBtn").addEventListener("click", () => {
+      const casinoOnlinePct = 61.54;
+      const menores13Pct = 38.46;
+
+      document.getElementById("results").classList.remove("hidden");
+
+      // Gráfico 1: Casino Online
+      new Chart(document.getElementById("casinoChart"), {
+        type: "pie",
+        data: {
+          labels: ["Apuesta en casino online", "No apuesta en casino online"],
+          datasets: [{
+            data: [casinoOnlinePct, 100 - casinoOnlinePct],
+            backgroundColor: ["#3b82f6", "#93c5fd"],
+          }]
+        },
+        options: { plugins: { legend: { position: "bottom" } } }
+      });
+
+      // Gráfico 2: Menores de 13 años
+      new Chart(document.getElementById("ageChart"), {
+        type: "pie",
+        data: {
+          labels: ["Menores de 13", "Mayores o iguales a 13"],
+          datasets: [{
+            data: [menores13Pct, 100 - menores13Pct],
+            backgroundColor: ["#f97316", "#fed7aa"],
+          }]
+        },
+        options: { plugins: { legend: { position: "bottom" } } }
+      });
+    });
+  </script>
+</body>
+</html>
